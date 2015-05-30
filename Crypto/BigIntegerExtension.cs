@@ -35,7 +35,7 @@ namespace Crypto
         {
             BigInteger result;
             // Максимальная длина записи генерируемого числа в системе счисления с основанием 16.
-            int maxLength = (int)BigInteger.Log(max, 16);
+            int maxLength = (int)BigInteger.Log(max, 256);
             // Генерируемое число представленное байтами, в порядке от младшего к старшему.
             // { 3, 2, 1 } => 0x10203
             var buffer = new byte[maxLength + 1];
