@@ -128,6 +128,44 @@ namespace Crypto
             return BigInteger.MinusOne;
         }
 
+        /// <summary>
+        /// Генерирует случайное нечётное число указанной длины (длина указана в битах).
+        /// </summary>
+        /// <param name="length">Длина генерируемого числа в битах.</param>
+        /// <returns>Нечётное случайное число.</returns>
+        public static BigInteger GenerateOdd(int bitsLength)
+        {
+            byte[] buffer = GenerateBits(bitsLength);
+            // Число должно быть нечётным => должно оканчиваться на единицу.
+            buffer[0] |= 0x01; 
+            return new BigInteger(buffer);
+        }
+        
+        /// <summary>
+        /// Генерирует число представленное в виде массива байтов в порядке от младшего к старшему.
+        /// </summary>
+        /// <param name="bits"></param>
+        /// <returns></returns>
+        private static byte[] GenerateBits(int bits)
+        {
+            // Число значащих бит в последнем байте. 
+            int lastByteBits = (bits - 1) % 8;
+            // Для выполнения битовой операции ИЛИ, с целью установить значение последнего значащего бита в 1.
+            byte orMask = (byte)(1 << lastByteBits);
+            // Для выполнения битовой операции И, с целью установить значения битов после последнего значащего в 0.            
+            byte andMask = (byte)(255 >> 8 - lastByteBits - 1);
+            // Количество байт в числе.
+            int bytes = (int)Ceiling(bits / 8d);
+            // Генерируем случайные байты.
+            var buffer = new byte[bytes+1];
+            prng.NextBytes(buffer);
+            buffer[bytes] = 0;
+            // Применяем битовые операции к последнему байту (старшему).
+            buffer[bytes - 1] |= orMask;
+            buffer[bytes - 1] &= andMask;
+            return buffer;
+        }        
+
         #endregion
         #region Public
 
@@ -157,57 +195,35 @@ namespace Crypto
             // Выполним вероятностный тест простоты Миллера-Рабина.
             return MillerRabinTest(value, r);
         }
-
+        
         /// <summary>
-        /// Создаёт случайное новое простое число принадлежащее указанному интервалу.
+        /// Создаёт вероятно простое число указанной длины.
         /// </summary>
-        /// <param name="min">Нижняя граница интервала (включённая).</param>
-        /// <param name="max">Верхняя граница интервала (включённая).</param>
-        /// <param name="probability">Вероятность того, что число не простое.</param>
-        public static BigInteger Create(BigInteger min, BigInteger max, double probability)
+        /// <param name="length">Длина числа в битах.</param>
+        /// <param name="probability">Вероятность того, что число составное.</param>
+        /// <returns>Вероятно простое число.</returns>
+        public static BigInteger Create(int length, double probability)
         {
-            if (min > max)
-                throw new ArgumentException("Нижняя граница не должна превышать верхнюю!");
-            if (min < 0)
-                throw new ArgumentException("Требуются положительные значения для границ интервалов!");
-            if (max <= smallPrimesBorder)
-                return smallPrimes.ElementAt(prng.Next(smallPrimes.Count(x => x <= max)));
-            // Генерируем случайное число.
-            BigInteger init = Generate(min, max);
-            // Если число чётное - добавляем единцу.
-            if (init.IsEven)
-                ++init;
-            if (IsPrime(init, probability))
-                return init;
-            // Движемся в разные стороны от сгенерированного числа, пока не найдём простое, либо границу интервала.
-            var ctss = new CancellationTokenSource[2] {
-                new CancellationTokenSource(),
-                new CancellationTokenSource()
-            };
-            var tasks = new Task<BigInteger>[2];
-            // В прямом направлении.
-            tasks[0] = Task.Factory.StartNew(_ => { return MoveToPrime(init, max, probability); }, ctss[0].Token);
-            // В обратном направлении.
-            tasks[1] = Task.Factory.StartNew(_ => { return MoveToPrime(init, min, probability); }, ctss[1].Token);
-            // Ожидаем завершения одной из задач.
-            int completed = Task.WaitAny(tasks);
-            int notCompleted = (completed == 0) ? 1 : 0;            
-            var result = tasks[completed].Result;
-            // Если результат отличен от -1, то найдено простое число.
-            if (result != BigInteger.MinusOne)
+            if (length <= Log(smallPrimesBorder, 2))
             {
-                // Завершаем незавершённую задачу и возвращаем результат.
-                ctss[notCompleted].Cancel();
-                return result;
+                int max = 1 << length;
+                if (max <= smallPrimesBorder)
+                    return smallPrimes.ElementAt(prng.Next(smallPrimes.Count(x => x <= max)));
             }
-            // Ожидаем завершения задачи.
-            tasks[notCompleted].Wait();
-            result = tasks[notCompleted].Result;
-            // Если результат отличен от -1, то найдено простое число.
-            if (result != BigInteger.MinusOne)
-                return tasks[notCompleted].Result;           
-            throw new ArgumentException("На заданном интервале нет простых чисел!");            
-        }        
+            Func<BigInteger> func = () => {
+                BigInteger result;
+                while (true)                                    
+                    if (IsPrime((result = GenerateOdd(length)), probability))
+                        return result;
+            };
+            var cts = new CancellationTokenSource();
+            var tasks = new Task<BigInteger>[Environment.ProcessorCount];
+            for (int i = 0; i < tasks.Length; ++i)
+                tasks[i] = Task.Factory.StartNew(func, cts.Token);
+            int index = Task.WaitAny(tasks);
+            cts.Cancel();
+            return tasks[index].Result;
+        }
 
         #endregion
         #endregion

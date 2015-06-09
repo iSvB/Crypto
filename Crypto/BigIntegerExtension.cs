@@ -45,7 +45,34 @@ namespace Crypto
                 buffer[maxLength] = 0x00;
                 result = new BigInteger(buffer);
             } while (result > max);
-            return result;            
+            return result;
+        }
+
+        /// <summary>
+        /// Поиск мультипликативно обратного к числу х по модулю m.
+        /// </summary>
+        public static BigInteger ModularInverse(BigInteger x, BigInteger m)
+        {
+            BigInteger a0 = x;
+            BigInteger a1 = m;
+            BigInteger x0 = 1;
+            BigInteger x1 = 0;
+            BigInteger y0 = 0;
+            BigInteger y1 = 1;
+            while (a1 != 0)
+            {
+                var q = a0 / a1;
+                var temp = a0;
+                a0 = a1;
+                a1 = temp - a1 * q;
+                temp = x0;
+                x0 = x1;
+                x1 = temp - x1 * q;
+                temp = y0;
+                y0 = y1;
+                y1 = temp - y1 * q;
+            }
+            return (x0 < 0) ? x0 + m : x0;
         }
     }
 }
