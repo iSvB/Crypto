@@ -23,9 +23,7 @@ namespace Crypto
 
         static void Main(string[] args)
         {
-            var ba = new BitArray(3L);
-            WriteLine(ba);            
-            //DemonstrateRSA();
+            DemonstrateRSA();
             ReadKey(true);
         }
 
