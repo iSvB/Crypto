@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using static Crypto.BigIntegerExtension;
 
 namespace Crypto.RSA
 {
@@ -11,7 +12,7 @@ namespace Crypto.RSA
     {
         public static byte[] Cipher(byte[] message, Key key)
         {
-            return BigInteger.ModPow(new BigInteger(message), key.Exponent, key.Module).ToByteArray();
+            return ModPow(new BigInteger(message), key.Module, key.Exponent).ToByteArray();
         }
     }
 }

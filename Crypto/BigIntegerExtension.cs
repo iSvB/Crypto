@@ -74,5 +74,25 @@ namespace Crypto
             }
             return (x0 < 0) ? x0 + m : x0;
         }
+
+        /// <summary>
+        /// Быстрое возведение в степень по модулю.
+        /// </summary>
+        public static BigInteger ModPow(BigInteger value, BigInteger modulus, BigInteger exponent)
+        {
+            BigInteger result = BigInteger.One;
+            value %= modulus;
+            while (exponent != 0)
+            {
+                if (exponent % 2 == 1)
+                {
+                    result = (result * value) % modulus;
+                    --exponent;
+                }
+                value = (value * value) % modulus;
+                exponent /= 2;
+            }
+            return result;
+        }
     }
 }

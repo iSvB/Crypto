@@ -77,12 +77,12 @@ namespace Crypto
             for (int i = 0; i < r; ++i)
             {
                 BigInteger a = Generate(2, value - 2);
-                BigInteger x = BigInteger.ModPow(a, t, value);
+                BigInteger x = ModPow(a, value, t);
                 if (x == 1 || x == decrValue)
                     continue;
                 for (int j = 0; j < s - 1; ++j)
                 {
-                    x = BigInteger.ModPow(x, 2, value);
+                    x = ModPow(x, value, 2);
                     if (x == 1)
                         return false;
                     if (x == decrValue)
@@ -98,8 +98,6 @@ namespace Crypto
         /// Определяет количество раундов теста Миллера-Рабина, которые необходимо провести 
         /// для достижения требуемой вероятности.
         /// </summary>
-        /// <param name="probability">Требуемая вероятность того, что число составное.</param>
-        /// <returns>Количество раундов теста Миллера-Рабина, которые требуется провести.</returns>
         private static int CalculateMillerRabinTestRounds(double probability)
         {
             if (probability < 0)
@@ -113,7 +111,6 @@ namespace Crypto
         /// </summary>
         /// <param name="value">Начальное значение.</param>
         /// <param name="border">Граница интервала, в сторону которой будем двигатся.</param>
-        /// <param name="probability">Требуемая вероятность того, что данное число составное.</param>
         /// <returns>Простое число, либо -1, если на заданном интервале нет простых чисел.</returns>
         private static BigInteger MoveToPrime(BigInteger value, BigInteger border, double probability)
         {
@@ -144,8 +141,6 @@ namespace Crypto
         /// <summary>
         /// Генерирует число представленное в виде массива байтов в порядке от младшего к старшему.
         /// </summary>
-        /// <param name="bits"></param>
-        /// <returns></returns>
         private static byte[] GenerateBits(int bits)
         {
             // Число значащих бит в последнем байте. 
@@ -172,9 +167,6 @@ namespace Crypto
         /// <summary>
         /// Определяет, является ли данное число простым, либо составным.
         /// </summary>
-        /// <param name="value">Проверяемое на простоту число.</param>
-        /// <param name="probability">Вероятность того, что число составное.</param>
-        /// <returns>Истина - число вероятно простое, в противном случае - ложь.</returns>
         public static bool IsPrime(BigInteger value, double probability)
         {
             if (value < 0)
@@ -200,8 +192,6 @@ namespace Crypto
         /// Создаёт вероятно простое число указанной длины.
         /// </summary>
         /// <param name="length">Длина числа в битах.</param>
-        /// <param name="probability">Вероятность того, что число составное.</param>
-        /// <returns>Вероятно простое число.</returns>
         public static BigInteger Create(int length, double probability)
         {
             if (length <= Log(smallPrimesBorder, 2))

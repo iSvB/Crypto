@@ -46,6 +46,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BigIntegerExtension.cs" />
+    <Compile Include="BitArray.cs" />
+    <Compile Include="DES\Coding.cs" />
+    <Compile Include="DES\Key.cs" />
     <Compile Include="RSA\Coding.cs" />
     <Compile Include="RSA\Key.cs" />
     <Compile Include="PrimeNumber.cs" />
@@ -55,6 +58,7 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
